@@ -27,6 +27,8 @@ using System.Collections.Generic;
 using System;
 
 namespace NetChuck;
+
+
 public class Chuckit
 {
 	public static async Task Main(string[] args)
@@ -42,7 +44,7 @@ public class Chuckit
 		Console.WriteLine(catelist);
 
 	}
-	public static void PrintHelp()
+	public void PrintHelp()
 	{
 		Console.WriteLine("No Argument!");
 		Environment.Exit(0);
@@ -54,7 +56,8 @@ public class Chuckit
 		{
 			try
 		 	{
-				
+	
+
 				// Define the API endpoint
 				string apiUrl = "https://api.chucknorris.io/jokes/categories";
 				
@@ -65,15 +68,47 @@ public class Chuckit
 				response.EnsureSuccessStatusCode(); 	
 				
 				// Read the response content as a string
-				string responseBody = await response.Content.ReadAsStringAsync();
+				string responseJSON = await response.Content.ReadAsStringAsync();
+				ReadOnlySpan<byte> jsonBytes = Encoding.UTF8.GetBytes(responseJSON);
+				
+				var options = new JsonReaderOptions
+				{
+				    AllowTrailingCommas = true,
+				    CommentHandling = JsonCommentHandling.Skip
+				};
+				//Stolen UTF8 Reader code from .NET tutorials. Not working. Yet.	
+				var reader = new Utf8JsonReader(jsonBytes);
+
+				while (reader.Read())
+				{
+				    Console.Write(reader.TokenType);
+
+				    switch (reader.TokenType)
+				    {
+					case JsonTokenType.PropertyName:
+					case JsonTokenType.String:
+					    {
+						string? text = reader.GetString();
+						Console.Write(" ");
+						Console.Write(text);
+						break;
+					    }
+
+				    }
+				    Console.WriteLine();
+				}
+
+
 
 				Console.WriteLine("GET Request Successful:");
-				return(responseBody.ToString);
+				Console.WriteLine(JsonBytes.GetType());
+				return(jsonBytes);
+
 
 		   	}
-		   	catch (HttpRequestException)
+		   	catch (HttpRequestException message)
 		   	{
-		  		Console.WriteLine($"Request Error: {e.Message}");
+		  		Console.WriteLine($"Request Error: {message}");
 				return null;
 		  	}
 		}
